@@ -25,6 +25,16 @@ const calculateStayDays = async (patient_id, room_id) => {
   return 1; // Default to 1 day for simplicity in this mockup
 };
 
+// GET /api/v1/billing - List all bills
+router.get('/', authorize('Admin', 'Receptionist'), async (req, res, next) => {
+  try {
+    const result = await query('SELECT * FROM Billing ORDER BY billing_date DESC');
+    res.status(200).json(result.rows);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // POST /api/v1/billing - Generate a final bill
 router.post('/', authorize('Admin', 'Receptionist'), async (req, res, next) => {
   try {

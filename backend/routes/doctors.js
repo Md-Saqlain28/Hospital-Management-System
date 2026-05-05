@@ -6,6 +6,16 @@ const router = express.Router();
 
 router.use(authenticate);
 
+// GET /api/v1/doctors
+router.get('/', authorize('Admin', 'Receptionist', 'Doctor'), async (req, res, next) => {
+  try {
+    const result = await query('SELECT * FROM Doctors ORDER BY first_name ASC');
+    res.status(200).json(result.rows);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /api/v1/doctors/:id/availability?date=YYYY-MM-DD
 router.get('/:id/availability', authorize('Admin', 'Receptionist'), async (req, res, next) => {
   try {
