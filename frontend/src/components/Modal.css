@@ -14,13 +14,14 @@
 }
 
 .modal-content {
-  background-color: var(--surface);
+  background-color: var(--surface-color);
   border-radius: 12px;
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--surface-border);
   animation: slideUp 0.3s ease-out;
 }
 
@@ -29,13 +30,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--surface-border);
 }
 
 .modal-header h2 {
   margin: 0;
   font-size: 1.25rem;
-  color: var(--primary);
+  color: var(--primary-color);
 }
 
 .modal-close {
@@ -52,8 +53,8 @@
 }
 
 .modal-close:hover {
-  background-color: var(--background);
-  color: var(--text);
+  background-color: var(--bg-color);
+  color: var(--text-main);
 }
 
 .modal-body {
@@ -68,22 +69,22 @@
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: var(--text);
+  color: var(--text-main);
 }
 
 .form-group input, .form-group select, .form-group textarea {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--border);
+  border: 1px solid #cbd5e1; /* Darker border for visibility */
   border-radius: 6px;
-  background-color: var(--background);
-  color: var(--text);
+  background-color: var(--bg-color);
+  color: var(--text-main);
   transition: border-color 0.2s;
 }
 
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
   outline: none;
-  border-color: var(--primary);
+  border-color: var(--primary-color);
 }
 
 @keyframes fadeIn {
