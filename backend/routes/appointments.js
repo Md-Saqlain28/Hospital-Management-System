@@ -77,31 +77,44 @@ router.post('/', authorize('Admin', 'Receptionist'), async (req, res, next) => {
 // GET /api/v1/appointments - List appointments (filterable)
 router.get('/', authorize('Admin', 'Doctor', 'Receptionist'), async (req, res, next) => {
   try {
-    const { date, doctor_id, status } = req.query;
+    const { date, doctor_id, status, limit } = req.query;
     
-    let sql = 'SELECT * FROM Appointments WHERE 1=1';
+    let sql = `
+      SELECT a.*, 
+             p.first_name as patient_first_name, p.last_name as patient_last_name,
+             d.first_name as doctor_first_name, d.last_name as doctor_last_name, d.specialization
+      FROM Appointments a
+      LEFT JOIN Patients p ON a.patient_id = p.patient_id
+      LEFT JOIN Doctors d ON a.doctor_id = d.doctor_id
+      WHERE 1=1
+    `;
     const params = [];
     let paramIdx = 1;
 
     if (date) {
-      sql += ` AND appointment_date = $${paramIdx++}`;
+      sql += ` AND a.appointment_date = $${paramIdx++}`;
       params.push(date);
     }
     
     if (doctor_id) {
-      sql += ` AND doctor_id = $${paramIdx++}`;
+      sql += ` AND a.doctor_id = $${paramIdx++}`;
       params.push(doctor_id);
     } else if (req.user.role === 'Doctor') {
-      sql += ` AND doctor_id = $${paramIdx++}`;
+      sql += ` AND a.doctor_id = $${paramIdx++}`;
       params.push(req.user.linked_id);
     }
 
     if (status) {
-      sql += ` AND status = $${paramIdx++}`;
+      sql += ` AND a.status = $${paramIdx++}`;
       params.push(status);
     }
 
-    sql += ' ORDER BY appointment_date DESC, start_time DESC';
+    sql += ' ORDER BY a.appointment_date DESC, a.start_time DESC';
+
+    if (limit) {
+      sql += ` LIMIT $${paramIdx++}`;
+      params.push(parseInt(limit, 10));
+    }
 
     const result = await query(sql, params);
     res.status(200).json(result.rows);
