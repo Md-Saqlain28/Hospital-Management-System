@@ -21,7 +21,7 @@
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: rgba(0, 0, 0, 0.2);
+  background: #f8fafc; /* Slate 50 */
 }
 
 .data-table tr:last-child td {
@@ -33,7 +33,7 @@
 }
 
 .data-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: #f1f5f9; /* Slate 100 */
 }
 
 .page-header {

@@ -42,61 +42,50 @@ const Login = () => {
       alignItems: 'center',
       justifyContent: 'center',
       minHeight: '100vh',
-      backgroundColor: 'var(--background)'
+      backgroundColor: 'var(--bg-color)'
     }}>
       <Card style={{ width: '100%', maxWidth: '400px', padding: '2rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ color: 'var(--primary)' }}>Hospital Admin</h1>
+          <h1 style={{ color: 'var(--primary-color)' }}>Hospital Admin</h1>
           <p className="text-muted">Sign in to your account</p>
         </div>
         
         {error && (
           <div style={{ 
-            backgroundColor: 'var(--danger-light, #ffebee)', 
+            backgroundColor: 'rgba(239, 68, 68, 0.1)', 
             color: 'var(--danger)', 
             padding: '10px', 
-            borderRadius: '4px', 
+            borderRadius: '6px', 
             marginBottom: '1rem',
-            fontSize: '0.9rem'
+            fontSize: '0.9rem',
+            border: '1px solid rgba(239, 68, 68, 0.2)'
           }}>
             {error}
           </div>
         )}
 
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Email</label>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div className="form-group">
+            <label>Email</label>
             <input 
               type="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: '6px',
-                border: '1px solid var(--border, #ccc)',
-                backgroundColor: 'var(--surface)'
-              }}
+              placeholder="Enter your email"
             />
           </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Password</label>
+          <div className="form-group">
+            <label>Password</label>
             <input 
               type="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: '6px',
-                border: '1px solid var(--border, #ccc)',
-                backgroundColor: 'var(--surface)'
-              }}
+              placeholder="Enter your password"
             />
           </div>
-          <Button type="submit" disabled={loading} style={{ width: '100%', marginTop: '1rem' }}>
+          <Button type="submit" disabled={loading} style={{ width: '100%', marginTop: '1.5rem' }}>
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>

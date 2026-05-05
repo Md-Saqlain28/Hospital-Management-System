@@ -10,7 +10,16 @@ const Doctors = () => {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [scheduleData, setScheduleData] = useState({
+    patient_id: '',
+    appointment_date: '',
+    start_time: '',
+    end_time: '',
+    reason: ''
+  });
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -40,6 +49,41 @@ const Doctors = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleScheduleChange = (e) => {
+    setScheduleData({ ...scheduleData, [e.target.name]: e.target.value });
+  };
+
+  const openScheduleModal = (doctor) => {
+    setSelectedDoctor(doctor);
+    setScheduleData({
+      patient_id: '',
+      appointment_date: '',
+      start_time: '',
+      end_time: '',
+      reason: ''
+    });
+    setIsScheduleModalOpen(true);
+  };
+
+  const handleBookAppointment = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const payload = {
+        ...scheduleData,
+        patient_id: parseInt(scheduleData.patient_id, 10),
+        doctor_id: selectedDoctor.doctor_id
+      };
+      await api.post('/appointments', payload);
+      setIsScheduleModalOpen(false);
+      alert('Appointment scheduled successfully!');
+    } catch (error) {
+      alert(error.message || 'Booking failed');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleAddDoctor = async (e) => {
@@ -100,7 +144,7 @@ const Doctors = () => {
                     </span>
                   </td>
                   <td>
-                    <Button variant="ghost" className="text-sm">Schedule</Button>
+                    <Button variant="ghost" className="text-sm" onClick={() => openScheduleModal(doctor)}>Schedule</Button>
                   </td>
                 </tr>
               ))}
@@ -147,6 +191,36 @@ const Doctors = () => {
           </div>
           <Button type="submit" style={{ width: '100%', marginTop: '1rem' }} disabled={submitting}>
             {submitting ? 'Adding...' : 'Add Doctor'}
+          </Button>
+        </form>
+      </Modal>
+
+      <Modal isOpen={isScheduleModalOpen} onClose={() => setIsScheduleModalOpen(false)} title={`Schedule: Dr. ${selectedDoctor?.last_name || ''}`}>
+        <form onSubmit={handleBookAppointment}>
+          <div className="form-group">
+            <label>Patient ID</label>
+            <input type="number" name="patient_id" value={scheduleData.patient_id} onChange={handleScheduleChange} required min="1" />
+          </div>
+          <div className="form-group">
+            <label>Date</label>
+            <input type="date" name="appointment_date" value={scheduleData.appointment_date} onChange={handleScheduleChange} required />
+          </div>
+          <div className="grid grid-cols-2">
+            <div className="form-group">
+              <label>Start Time</label>
+              <input type="time" name="start_time" value={scheduleData.start_time} onChange={handleScheduleChange} required />
+            </div>
+            <div className="form-group">
+              <label>End Time</label>
+              <input type="time" name="end_time" value={scheduleData.end_time} onChange={handleScheduleChange} required />
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Reason</label>
+            <textarea name="reason" value={scheduleData.reason} onChange={handleScheduleChange} rows="2" />
+          </div>
+          <Button type="submit" style={{ width: '100%', marginTop: '1rem' }} disabled={submitting}>
+            {submitting ? 'Booking...' : 'Book Appointment'}
           </Button>
         </form>
       </Modal>

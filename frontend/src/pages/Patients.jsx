@@ -10,6 +10,9 @@ const Patients = () => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
@@ -40,6 +43,20 @@ const Patients = () => {
     }
   };
 
+  const handleViewPatient = async (id) => {
+    try {
+      setLoadingDetails(true);
+      setIsViewModalOpen(true);
+      const res = await api.get(`/patients/${id}`);
+      setSelectedPatient(res);
+    } catch (error) {
+      alert('Failed to load patient details');
+      setIsViewModalOpen(false);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -52,6 +69,12 @@ const Patients = () => {
         ...formData,
         age: parseInt(formData.age, 10)
       };
+      
+      // Clean up empty optional fields so Zod doesn't throw validation errors
+      if (!payload.email) delete payload.email;
+      if (!payload.address) delete payload.address;
+      if (!payload.emergency_contact) delete payload.emergency_contact;
+
       await api.post('/patients', payload);
       setIsModalOpen(false);
       setFormData({
@@ -102,7 +125,7 @@ const Patients = () => {
                   <td><span style={{color: 'var(--danger)', fontWeight: 'bold'}}>{patient.blood_group || 'N/A'}</span></td>
                   <td>{patient.phone}</td>
                   <td>
-                    <Button variant="ghost" className="text-sm">View</Button>
+                    <Button variant="ghost" className="text-sm" onClick={() => handleViewPatient(patient.patient_id)}>View</Button>
                   </td>
                 </tr>
               ))}
@@ -113,7 +136,7 @@ const Patients = () => {
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Register New Patient">
         <form onSubmit={handleRegister}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="grid grid-cols-2">
             <div className="form-group">
               <label>First Name</label>
               <input type="text" name="first_name" value={formData.first_name} onChange={handleChange} required />
@@ -143,6 +166,10 @@ const Patients = () => {
               <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required />
             </div>
             <div className="form-group">
+              <label>Email (Optional)</label>
+              <input type="email" name="email" value={formData.email} onChange={handleChange} />
+            </div>
+            <div className="form-group">
               <label>Blood Group</label>
               <select name="blood_group" value={formData.blood_group} onChange={handleChange}>
                 <option value="A+">A+</option>
@@ -168,6 +195,33 @@ const Patients = () => {
             {submitting ? 'Registering...' : 'Register Patient'}
           </Button>
         </form>
+      </Modal>
+
+      <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} title="Patient Details">
+        {loadingDetails ? (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>Loading details...</div>
+        ) : selectedPatient ? (
+          <div className="patient-details">
+            <div className="grid grid-cols-2" style={{ marginBottom: '1.5rem', gap: '1rem' }}>
+              <div><strong style={{ color: 'var(--text-main)' }}>Name:</strong> <br/><span className="text-muted">{selectedPatient.first_name} {selectedPatient.last_name}</span></div>
+              <div><strong style={{ color: 'var(--text-main)' }}>ID:</strong> <br/><span className="text-muted">#{selectedPatient.patient_id}</span></div>
+              <div><strong style={{ color: 'var(--text-main)' }}>Date of Birth:</strong> <br/><span className="text-muted">{new Date(selectedPatient.date_of_birth).toLocaleDateString()}</span></div>
+              <div><strong style={{ color: 'var(--text-main)' }}>Age:</strong> <br/><span className="text-muted">{selectedPatient.age} years</span></div>
+              <div><strong style={{ color: 'var(--text-main)' }}>Gender:</strong> <br/><span className="text-muted">{selectedPatient.gender}</span></div>
+              <div><strong style={{ color: 'var(--text-main)' }}>Blood Group:</strong> <br/><span className="text-muted" style={{color: 'var(--danger)', fontWeight: 'bold'}}>{selectedPatient.blood_group || 'N/A'}</span></div>
+              <div><strong style={{ color: 'var(--text-main)' }}>Phone:</strong> <br/><span className="text-muted">{selectedPatient.phone}</span></div>
+              <div><strong style={{ color: 'var(--text-main)' }}>Email:</strong> <br/><span className="text-muted">{selectedPatient.email || 'N/A'}</span></div>
+              <div style={{ gridColumn: 'span 2' }}><strong style={{ color: 'var(--text-main)' }}>Emergency Contact:</strong> <br/><span className="text-muted">{selectedPatient.emergency_contact || 'N/A'}</span></div>
+              <div style={{ gridColumn: 'span 2' }}>
+                <strong style={{ color: 'var(--text-main)' }}>Address:</strong>
+                <p className="text-muted" style={{ marginTop: '0.25rem' }}>{selectedPatient.address || 'N/A'}</p>
+              </div>
+            </div>
+            <Button onClick={() => setIsViewModalOpen(false)} style={{ width: '100%' }}>Close</Button>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>Could not load patient.</div>
+        )}
       </Modal>
     </div>
   );

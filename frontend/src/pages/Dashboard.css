@@ -23,10 +23,10 @@
   color: white;
 }
 
-.patient-icon { background: linear-gradient(135deg, #0ea5e9, #38bdf8); }
-.doctor-icon { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
-.room-icon { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
-.appt-icon { background: linear-gradient(135deg, #10b981, #34d399); }
+.patient-icon { background: linear-gradient(135deg, #10b981, #34d399); } /* Green */
+.doctor-icon { background: linear-gradient(135deg, #3b82f6, #60a5fa); } /* Blue */
+.room-icon { background: linear-gradient(135deg, #f59e0b, #fbbf24); } /* Orange */
+.appt-icon { background: linear-gradient(135deg, #8b5cf6, #a855f7); } /* Purple */
 
 .stat-content h3 {
   font-size: 0.875rem;
@@ -53,7 +53,7 @@
 
 .placeholder-chart {
   height: 250px;
-  background: rgba(255,255,255,0.02);
+  background: #f8fafc;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -72,8 +72,9 @@
   align-items: center;
   gap: 1.5rem;
   padding: 1rem;
-  background: rgba(255,255,255,0.03);
+  background: #f8fafc;
   border-radius: 8px;
+  border: 1px solid var(--surface-border);
 }
 
 .appt-time {
