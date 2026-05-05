@@ -1,10 +1,37 @@
 import express from 'express';
 import { query } from '../db/index.js';
+import { z } from 'zod';
 import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
 router.use(authenticate);
+
+const doctorSchema = z.object({
+  first_name: z.string().min(1),
+  last_name: z.string().min(1),
+  specialization: z.string().min(1),
+  phone: z.string().min(1),
+  email: z.string().email(),
+  license_number: z.string().min(1),
+  shift_start: z.string(),
+  shift_end: z.string()
+});
+
+// POST /api/v1/doctors
+router.post('/', authorize('Admin'), async (req, res, next) => {
+  try {
+    const data = doctorSchema.parse(req.body);
+    const result = await query(
+      `INSERT INTO Doctors (first_name, last_name, specialization, phone, email, license_number, shift_start, shift_end)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [data.first_name, data.last_name, data.specialization, data.phone, data.email, data.license_number, data.shift_start, data.shift_end]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    next(error);
+  }
+});
 
 // GET /api/v1/doctors
 router.get('/', authorize('Admin', 'Receptionist', 'Doctor'), async (req, res, next) => {
