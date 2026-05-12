@@ -68,6 +68,57 @@ router.get('/', authorize('Admin', 'Doctor', 'Receptionist'), async (req, res, n
   }
 });
 
+// GET /api/v1/patients/stats/admission-trends - Patient admission trends for the current week
+router.get('/stats/admission-trends', authorize('Admin', 'Doctor', 'Receptionist'), async (req, res, next) => {
+  try {
+    // Get the start of current week (Monday) and end (Sunday)
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ...
+    const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+    
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    const result = await query(
+      `SELECT 
+         EXTRACT(DOW FROM created_at) AS dow,
+         COUNT(*) AS count
+       FROM Patients
+       WHERE created_at >= $1 AND created_at <= $2
+       GROUP BY EXTRACT(DOW FROM created_at)
+       ORDER BY EXTRACT(DOW FROM created_at)`,
+      [monday.toISOString(), sunday.toISOString()]
+    );
+
+    // Map PostgreSQL DOW (0=Sun, 1=Mon, ..., 6=Sat) to day names
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    // Order: Mon, Tue, Wed, Thu, Fri, Sat, Sun
+    const orderedDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    // Build a lookup from query results
+    const countsByDay = {};
+    result.rows.forEach(row => {
+      const dayName = dayNames[parseInt(row.dow)];
+      countsByDay[dayName] = parseInt(row.count);
+    });
+
+    // Build final ordered array with 0 for days with no admissions
+    const admissionTrends = orderedDays.map(day => ({
+      name: day,
+      patients: countsByDay[day] || 0
+    }));
+
+    res.status(200).json(admissionTrends);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /api/v1/patients/:id - Get patient details
 router.get('/:id', authorize('Admin', 'Doctor', 'Receptionist'), async (req, res, next) => {
   try {
