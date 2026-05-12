@@ -6,6 +6,79 @@ import { CalendarPlus } from 'lucide-react';
 import { api } from '../lib/api';
 import './Shared.css';
 
+// Helper: convert 24h "HH:mm" to { hour, minute, period }
+const to12h = (time24) => {
+  if (!time24) return { hour: '12', minute: '00', period: 'AM' };
+  const [hStr, mStr] = time24.split(':');
+  let h = parseInt(hStr, 10);
+  const period = h >= 12 ? 'PM' : 'AM';
+  if (h === 0) h = 12;
+  else if (h > 12) h -= 12;
+  return { hour: String(h), minute: mStr || '00', period };
+};
+
+// Helper: convert { hour, minute, period } back to 24h "HH:mm"
+const to24h = (hour, minute, period) => {
+  let h = parseInt(hour, 10);
+  if (period === 'AM' && h === 12) h = 0;
+  else if (period === 'PM' && h !== 12) h += 12;
+  return `${String(h).padStart(2, '0')}:${minute}`;
+};
+
+// Helper: format a 24h time string to 12h display
+const formatTime12h = (time24) => {
+  if (!time24) return '';
+  const { hour, minute, period } = to12h(time24);
+  return `${hour}:${minute} ${period}`;
+};
+
+// Reusable time picker component with AM/PM
+const TimePicker = ({ value, onChange, label, required }) => {
+  const parsed = to12h(value);
+
+  const handlePart = (part, val) => {
+    const next = { ...parsed, [part]: val };
+    onChange(to24h(next.hour, next.minute, next.period));
+  };
+
+  return (
+    <div className="form-group">
+      <label>{label}</label>
+      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+        <select
+          value={parsed.hour}
+          onChange={(e) => handlePart('hour', e.target.value)}
+          required={required}
+          style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--surface-border)', fontSize: '0.9rem' }}
+        >
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+            <option key={h} value={String(h)}>{String(h).padStart(2, '0')}</option>
+          ))}
+        </select>
+        <span style={{ fontWeight: 600, fontSize: '1rem' }}>:</span>
+        <select
+          value={parsed.minute}
+          onChange={(e) => handlePart('minute', e.target.value)}
+          required={required}
+          style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--surface-border)', fontSize: '0.9rem' }}
+        >
+          {['00', '15', '30', '45'].map((m) => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+        <select
+          value={parsed.period}
+          onChange={(e) => handlePart('period', e.target.value)}
+          style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--surface-border)', fontSize: '0.9rem', fontWeight: 600 }}
+        >
+          <option value="AM">AM</option>
+          <option value="PM">PM</option>
+        </select>
+      </div>
+    </div>
+  );
+};
+
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,8 +88,8 @@ const Appointments = () => {
     patient_id: '',
     doctor_id: '',
     appointment_date: '',
-    start_time: '',
-    end_time: '',
+    start_time: '09:00',
+    end_time: '10:00',
     reason: ''
   });
 
@@ -51,7 +124,7 @@ const Appointments = () => {
       };
       await api.post('/appointments', payload);
       setIsModalOpen(false);
-      setFormData({ patient_id: '', doctor_id: '', appointment_date: '', start_time: '', end_time: '', reason: '' });
+      setFormData({ patient_id: '', doctor_id: '', appointment_date: '', start_time: '09:00', end_time: '10:00', reason: '' });
       fetchAppointments();
     } catch (error) {
       alert(error.message || 'Booking failed');
@@ -103,7 +176,7 @@ const Appointments = () => {
                     <div style={{fontWeight: 600, color: 'var(--primary-color)'}}>
                       {new Date(appt.appointment_date).toLocaleDateString()}
                     </div>
-                    <div className="text-muted">{appt.start_time} - {appt.end_time}</div>
+                    <div className="text-muted">{formatTime12h(appt.start_time)} - {formatTime12h(appt.end_time)}</div>
                   </td>
                   <td style={{ fontWeight: 500 }}>#{appt.patient_id}</td>
                   <td className="text-muted">#{appt.doctor_id}</td>
@@ -141,14 +214,18 @@ const Appointments = () => {
             <input type="date" name="appointment_date" value={formData.appointment_date} onChange={handleChange} required />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label>Start Time</label>
-              <input type="time" name="start_time" value={formData.start_time} onChange={handleChange} required />
-            </div>
-            <div className="form-group">
-              <label>End Time</label>
-              <input type="time" name="end_time" value={formData.end_time} onChange={handleChange} required />
-            </div>
+            <TimePicker
+              label="Start Time"
+              value={formData.start_time}
+              onChange={(val) => setFormData({ ...formData, start_time: val })}
+              required
+            />
+            <TimePicker
+              label="End Time"
+              value={formData.end_time}
+              onChange={(val) => setFormData({ ...formData, end_time: val })}
+              required
+            />
           </div>
           <div className="form-group">
             <label>Reason</label>

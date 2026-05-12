@@ -6,6 +6,79 @@ import { Plus } from 'lucide-react';
 import { api } from '../lib/api';
 import './Shared.css';
 
+// Helper: convert 24h "HH:mm" to { hour, minute, period }
+const to12h = (time24) => {
+  if (!time24) return { hour: '12', minute: '00', period: 'AM' };
+  const [hStr, mStr] = time24.split(':');
+  let h = parseInt(hStr, 10);
+  const period = h >= 12 ? 'PM' : 'AM';
+  if (h === 0) h = 12;
+  else if (h > 12) h -= 12;
+  return { hour: String(h), minute: mStr || '00', period };
+};
+
+// Helper: convert { hour, minute, period } back to 24h "HH:mm"
+const to24h = (hour, minute, period) => {
+  let h = parseInt(hour, 10);
+  if (period === 'AM' && h === 12) h = 0;
+  else if (period === 'PM' && h !== 12) h += 12;
+  return `${String(h).padStart(2, '0')}:${minute}`;
+};
+
+// Helper: format a 24h time string to 12h display
+const formatTime12h = (time24) => {
+  if (!time24) return '';
+  const { hour, minute, period } = to12h(time24);
+  return `${hour}:${minute} ${period}`;
+};
+
+// Reusable time picker component with AM/PM
+const TimePicker = ({ value, onChange, label, required }) => {
+  const parsed = to12h(value);
+
+  const handlePart = (part, val) => {
+    const next = { ...parsed, [part]: val };
+    onChange(to24h(next.hour, next.minute, next.period));
+  };
+
+  return (
+    <div className="form-group">
+      <label>{label}</label>
+      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+        <select
+          value={parsed.hour}
+          onChange={(e) => handlePart('hour', e.target.value)}
+          required={required}
+          style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--surface-border)', fontSize: '0.9rem' }}
+        >
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+            <option key={h} value={String(h)}>{String(h).padStart(2, '0')}</option>
+          ))}
+        </select>
+        <span style={{ fontWeight: 600, fontSize: '1rem' }}>:</span>
+        <select
+          value={parsed.minute}
+          onChange={(e) => handlePart('minute', e.target.value)}
+          required={required}
+          style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--surface-border)', fontSize: '0.9rem' }}
+        >
+          {['00', '15', '30', '45'].map((m) => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+        <select
+          value={parsed.period}
+          onChange={(e) => handlePart('period', e.target.value)}
+          style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--surface-border)', fontSize: '0.9rem', fontWeight: 600 }}
+        >
+          <option value="AM">AM</option>
+          <option value="PM">PM</option>
+        </select>
+      </div>
+    </div>
+  );
+};
+
 const Doctors = () => {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,8 +89,8 @@ const Doctors = () => {
   const [scheduleData, setScheduleData] = useState({
     patient_id: '',
     appointment_date: '',
-    start_time: '',
-    end_time: '',
+    start_time: '09:00',
+    end_time: '10:00',
     reason: ''
   });
   const [formData, setFormData] = useState({
@@ -60,8 +133,8 @@ const Doctors = () => {
     setScheduleData({
       patient_id: '',
       appointment_date: '',
-      start_time: '',
-      end_time: '',
+      start_time: '09:00',
+      end_time: '10:00',
       reason: ''
     });
     setIsScheduleModalOpen(true);
@@ -137,7 +210,7 @@ const Doctors = () => {
                   <td>#{doctor.doctor_id}</td>
                   <td style={{ fontWeight: 500 }}>{doctor.first_name} {doctor.last_name}</td>
                   <td className="text-muted">{doctor.specialization}</td>
-                  <td>{doctor.shift_start} - {doctor.shift_end}</td>
+                  <td>{formatTime12h(doctor.shift_start)} - {formatTime12h(doctor.shift_end)}</td>
                   <td>
                     <span className={`status-badge ${doctor.is_active ? 'status-active' : 'status-inactive'}`}>
                       {doctor.is_active ? 'Active' : 'Inactive'}
@@ -180,14 +253,18 @@ const Doctors = () => {
               <label>Email</label>
               <input type="email" name="email" value={formData.email} onChange={handleChange} required />
             </div>
-            <div className="form-group">
-              <label>Shift Start</label>
-              <input type="time" name="shift_start" value={formData.shift_start} onChange={handleChange} required />
-            </div>
-            <div className="form-group">
-              <label>Shift End</label>
-              <input type="time" name="shift_end" value={formData.shift_end} onChange={handleChange} required />
-            </div>
+            <TimePicker
+              label="Shift Start"
+              value={formData.shift_start}
+              onChange={(val) => setFormData({ ...formData, shift_start: val })}
+              required
+            />
+            <TimePicker
+              label="Shift End"
+              value={formData.shift_end}
+              onChange={(val) => setFormData({ ...formData, shift_end: val })}
+              required
+            />
           </div>
           <Button type="submit" style={{ width: '100%', marginTop: '1rem' }} disabled={submitting}>
             {submitting ? 'Adding...' : 'Add Doctor'}
@@ -206,14 +283,18 @@ const Doctors = () => {
             <input type="date" name="appointment_date" value={scheduleData.appointment_date} onChange={handleScheduleChange} required />
           </div>
           <div className="grid grid-cols-2">
-            <div className="form-group">
-              <label>Start Time</label>
-              <input type="time" name="start_time" value={scheduleData.start_time} onChange={handleScheduleChange} required />
-            </div>
-            <div className="form-group">
-              <label>End Time</label>
-              <input type="time" name="end_time" value={scheduleData.end_time} onChange={handleScheduleChange} required />
-            </div>
+            <TimePicker
+              label="Start Time"
+              value={scheduleData.start_time}
+              onChange={(val) => setScheduleData({ ...scheduleData, start_time: val })}
+              required
+            />
+            <TimePicker
+              label="End Time"
+              value={scheduleData.end_time}
+              onChange={(val) => setScheduleData({ ...scheduleData, end_time: val })}
+              required
+            />
           </div>
           <div className="form-group">
             <label>Reason</label>

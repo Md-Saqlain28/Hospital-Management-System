@@ -20,17 +20,15 @@ const Dashboard = () => {
     rooms: '0% capacity',
     todayAppts: '0% from yesterday'
   });
-
-  // Mock data for the admission trends graph
-  const admissionData = [
-    { name: 'Mon', patients: 12 },
-    { name: 'Tue', patients: 19 },
-    { name: 'Wed', patients: 15 },
-    { name: 'Thu', patients: 22 },
-    { name: 'Fri', patients: 28 },
-    { name: 'Sat', patients: 14 },
-    { name: 'Sun', patients: 8 },
-  ];
+  const [admissionData, setAdmissionData] = useState([
+    { name: 'Mon', patients: 0 },
+    { name: 'Tue', patients: 0 },
+    { name: 'Wed', patients: 0 },
+    { name: 'Thu', patients: 0 },
+    { name: 'Fri', patients: 0 },
+    { name: 'Sat', patients: 0 },
+    { name: 'Sun', patients: 0 },
+  ]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -48,13 +46,19 @@ const Dashboard = () => {
         const yesterdayLocalISO = new Date(yesterday.getTime() - tzOffset).toISOString();
         const yesterdayStr = yesterdayLocalISO.split('T')[0];
         
-        const [patientsRes, doctorsRes, roomsRes, todayApptsRes, yesterdayApptsRes] = await Promise.all([
+        const [patientsRes, doctorsRes, roomsRes, todayApptsRes, yesterdayApptsRes, admissionTrendsRes] = await Promise.all([
           api.get('/patients?limit=10000'), // Fetch all to calculate trends
           api.get('/doctors'),
           api.get('/rooms'),
           api.get(`/appointments?date=${todayStr}`),
-          api.get(`/appointments?date=${yesterdayStr}`)
+          api.get(`/appointments?date=${yesterdayStr}`),
+          api.get('/patients/stats/admission-trends')
         ]);
+
+        // Update admission trends chart data
+        if (Array.isArray(admissionTrendsRes) && admissionTrendsRes.length > 0) {
+          setAdmissionData(admissionTrendsRes);
+        }
 
         const allPatients = patientsRes?.data || [];
         const totalPatients = patientsRes?.meta?.total || allPatients.length;
@@ -204,7 +208,7 @@ const Dashboard = () => {
               <LineChart data={admissionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--surface-border)" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)' }} dx={-10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)' }} dx={-10} domain={[0, 25]} ticks={[0, 5, 10, 15, 20, 25]} allowDecimals={false} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'var(--surface-color)', borderRadius: '8px', border: '1px solid var(--surface-border)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}
                   itemStyle={{ color: 'var(--primary-color)', fontWeight: 'bold' }}
