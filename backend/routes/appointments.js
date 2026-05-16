@@ -78,6 +78,12 @@ router.post('/', authorize('Admin', 'Receptionist'), async (req, res, next) => {
 router.get('/', authorize('Admin', 'Doctor', 'Receptionist'), async (req, res, next) => {
   try {
     const { date, doctor_id, status, limit } = req.query;
+
+    // Auto-mark past "Scheduled" appointments as "Completed"
+    await query(
+      `UPDATE Appointments SET status = 'Completed'
+       WHERE status = 'Scheduled' AND appointment_date < CURRENT_DATE`
+    );
     
     let sql = `
       SELECT a.*, 
@@ -94,6 +100,9 @@ router.get('/', authorize('Admin', 'Doctor', 'Receptionist'), async (req, res, n
     if (date) {
       sql += ` AND a.appointment_date = $${paramIdx++}`;
       params.push(date);
+    } else {
+      // By default, only show today and future appointments
+      sql += ` AND a.appointment_date >= CURRENT_DATE`;
     }
     
     if (doctor_id) {
