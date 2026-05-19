@@ -35,6 +35,12 @@ router.post('/', authorize('Admin', 'Receptionist'), async (req, res, next) => {
       return res.status(404).json({ error: 'Doctor not found or inactive' });
     }
 
+    // Step 1.5: Verify patient exists
+    const patientResult = await query('SELECT patient_id FROM Patients WHERE patient_id = $1', [patient_id]);
+    if (patientResult.rowCount === 0) {
+      return res.status(404).json({ error: 'Patient not found. Please check the Patient ID.' });
+    }
+
     // Step 2: Check requested time is within doctor's shift
     // For simplicity, string comparison on time (assuming HH:mm:ss format)
     if (start_time < doctor.shift_start || end_time > doctor.shift_end) {
