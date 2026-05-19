@@ -61,17 +61,20 @@ const Header = () => {
 
         const q = searchQuery.toLowerCase();
         
-        const filteredPatients = allPatients.filter(p => 
-          p.first_name.toLowerCase().includes(q) || 
-          p.last_name.toLowerCase().includes(q) ||
-          p.phone.includes(q)
-        ).slice(0, 3);
+        const filteredPatients = allPatients.filter(p => {
+          const fullName = `${p.first_name} ${p.last_name}`.toLowerCase();
+          return fullName.includes(q) || p.phone.includes(q);
+        }).slice(0, 3);
 
-        const filteredDoctors = allDoctors.filter(d => 
-          d.first_name.toLowerCase().includes(q) || 
-          d.last_name.toLowerCase().includes(q) ||
-          d.specialization.toLowerCase().includes(q)
-        ).slice(0, 3);
+        const filteredDoctors = allDoctors.filter(d => {
+          const fullName = `${d.first_name} ${d.last_name}`.toLowerCase();
+          const fullNameWithDr = `dr ${fullName}`;
+          const fullNameWithDrDot = `dr. ${fullName}`;
+          return fullName.includes(q) || 
+                 fullNameWithDr.includes(q) || 
+                 fullNameWithDrDot.includes(q) || 
+                 d.specialization.toLowerCase().includes(q);
+        }).slice(0, 3);
 
         setSearchResults({ patients: filteredPatients, doctors: filteredDoctors });
       } catch (error) {
