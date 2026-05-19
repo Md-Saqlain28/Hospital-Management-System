@@ -148,8 +148,8 @@ const Dashboard = () => {
   return (
     <div className="dashboard">
       <div className="dashboard-header">
-        <h1>Dashboard Overview</h1>
-        <p className="text-muted">Welcome back, Dr. Sarah Jenkins</p>
+        <h1>Welcome back, Dr. Sarah Jenkins 👋</h1>
+        <p className="text-muted">Here's your hospital overview for today.</p>
       </div>
 
       <div className="grid grid-cols-4 dashboard-stats">
