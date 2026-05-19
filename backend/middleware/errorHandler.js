@@ -3,7 +3,7 @@ export const errorHandler = (err, req, res, next) => {
 
   // Default error
   let statusCode = 500;
-  let message = 'Internal Server Error';
+  let message = err.message || 'Internal Server Error';
 
   if (err.name === 'ZodError') {
     statusCode = 400;
