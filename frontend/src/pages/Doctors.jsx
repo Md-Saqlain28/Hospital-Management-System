@@ -144,8 +144,13 @@ const Doctors = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const [startHour, startMin] = scheduleData.start_time.split(':');
+      const endHourStr = String((parseInt(startHour, 10) + 1) % 24).padStart(2, '0');
+      const calculatedEndTime = `${endHourStr}:${startMin}`;
+
       const payload = {
         ...scheduleData,
+        end_time: calculatedEndTime,
         patient_id: parseInt(scheduleData.patient_id, 10),
         doctor_id: selectedDoctor.doctor_id
       };
@@ -282,20 +287,12 @@ const Doctors = () => {
             <label>Date</label>
             <input type="date" name="appointment_date" value={scheduleData.appointment_date} onChange={handleScheduleChange} required />
           </div>
-          <div className="grid grid-cols-2">
-            <TimePicker
-              label="Start Time"
-              value={scheduleData.start_time}
-              onChange={(val) => setScheduleData({ ...scheduleData, start_time: val })}
-              required
-            />
-            <TimePicker
-              label="End Time"
-              value={scheduleData.end_time}
-              onChange={(val) => setScheduleData({ ...scheduleData, end_time: val })}
-              required
-            />
-          </div>
+          <TimePicker
+            label="Time"
+            value={scheduleData.start_time}
+            onChange={(val) => setScheduleData({ ...scheduleData, start_time: val })}
+            required
+          />
           <div className="form-group">
             <label>Reason</label>
             <textarea name="reason" value={scheduleData.reason} onChange={handleScheduleChange} rows="2" />
